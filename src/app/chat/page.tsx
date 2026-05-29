@@ -1,11 +1,18 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
+import { RiskSupportCard } from "../../components/RiskSupportCard";
 
 type Message = {
   id: string;
   role: "user" | "assistant";
   content: string;
+};
+
+type RiskAssessment = {
+  riskLevel: "low" | "medium" | "high" | "emergency";
+  reason: string;
+  showSupportCard: boolean;
 };
 
 const initialMessages: Message[] = [
@@ -26,6 +33,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [showRiskSupportCard, setShowRiskSupportCard] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const trimmedInput = input.trim();
@@ -58,7 +66,16 @@ export default function ChatPage() {
     }, requestTimeoutMs);
 
     try {
-      const response = await fetch("/api/chat", {
+      const riskPromise = fetch("/api/risk", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: userMessage.content }),
+        signal: controller.signal,
+      });
+
+      const chatPromise = fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -72,6 +89,31 @@ export default function ChatPage() {
         signal: controller.signal,
       });
 
+      const [riskResult, chatResult] = await Promise.allSettled([
+        riskPromise,
+        chatPromise,
+      ]);
+
+      const riskData =
+        riskResult.status === "fulfilled"
+          ? ((await riskResult.value.json().catch(() => null)) as
+              | RiskAssessment
+              | null)
+          : null;
+
+      if (
+        riskData?.riskLevel === "high" ||
+        riskData?.riskLevel === "emergency" ||
+        riskData?.showSupportCard === true
+      ) {
+        setShowRiskSupportCard(true);
+      }
+
+      if (chatResult.status === "rejected") {
+        throw chatResult.reason;
+      }
+
+      const response = chatResult.value;
       const data = (await response.json().catch(() => null)) as {
         reply?: unknown;
         error?: unknown;
@@ -116,6 +158,7 @@ export default function ChatPage() {
 
     setMessages(initialMessages);
     setInput("");
+    setShowRiskSupportCard(false);
   }
 
   return (
@@ -145,6 +188,8 @@ export default function ChatPage() {
       <p className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
         本助手仅提供一般性情绪支持，不替代专业医疗或心理咨询服务。
       </p>
+
+      {showRiskSupportCard ? <RiskSupportCard /> : null}
 
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
         <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5">
