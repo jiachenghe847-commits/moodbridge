@@ -22,8 +22,8 @@ export default function PrivacyPage() {
         <div>
           <h2 className="font-semibold text-stone-950">隐私原则</h2>
           <p className="mt-2">
-            当前阶段没有模型 API、数据库或登录系统。后续实现应避免长期保存完整对话，
-            并确保密钥只存在于服务端环境变量中。
+            当前阶段的聊天内容只保存在页面状态中，不写入数据库。模型密钥只存在于服务端环境变量中，
+            前端代码不应包含或暴露真实密钥。
           </p>
         </div>
       </section>

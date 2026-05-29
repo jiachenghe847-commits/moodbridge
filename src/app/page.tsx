@@ -29,10 +29,10 @@ export default function Home() {
           </div>
         </div>
         <div className="rounded-lg border border-stone-200 bg-white p-6 shadow-sm">
-          <h2 className="text-base font-semibold text-stone-950">阶段 1 范围</h2>
+          <h2 className="text-base font-semibold text-stone-950">当前范围</h2>
           <ul className="mt-4 space-y-3 text-sm leading-6 text-stone-700">
             <li>已建立页面骨架与中文导航。</li>
-            <li>暂不接入模型 API。</li>
+            <li>聊天页通过服务端 API 调用模型。</li>
             <li>暂不创建数据库。</li>
             <li>暂不实现登录。</li>
           </ul>

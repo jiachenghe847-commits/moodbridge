@@ -17,8 +17,10 @@ const initialMessages: Message[] = [
   },
 ];
 
-const mockReply =
-  "谢谢你愿意说出来。我听见这件事对你有影响。可以先慢慢呼吸一下，再试着把最困扰你的部分拆成一小句：现在最需要被照顾的感受是什么？";
+const fallbackErrorMessage =
+  "抱歉，当前暂时无法获得回复。你可以稍后再试；如果你正处于紧急危险中，请立即联系当地紧急服务或身边可信任的人。";
+
+const requestTimeoutMs = 25_000;
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
@@ -33,7 +35,7 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isSending]);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!canSend) {
@@ -50,16 +52,61 @@ export default function ChatPage() {
     setInput("");
     setIsSending(true);
 
-    window.setTimeout(() => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => {
+      controller.abort();
+    }, requestTimeoutMs);
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messages: [...messages, userMessage].map((message) => ({
+            role: message.role,
+            content: message.content,
+          })),
+        }),
+        signal: controller.signal,
+      });
+
+      const data = (await response.json().catch(() => null)) as {
+        reply?: unknown;
+        error?: unknown;
+      } | null;
+
+      if (!response.ok || typeof data?.reply !== "string") {
+        throw new Error(
+          typeof data?.error === "string" ? data.error : fallbackErrorMessage,
+        );
+      }
+
       const assistantMessage: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: mockReply,
+        content: data.reply,
       };
 
       setMessages((currentMessages) => [...currentMessages, assistantMessage]);
+    } catch (error) {
+      const assistantMessage: Message = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content:
+          error instanceof DOMException && error.name === "AbortError"
+            ? "请求超时了，请稍后再试。"
+            : error instanceof Error
+              ? error.message
+              : fallbackErrorMessage,
+      };
+
+      setMessages((currentMessages) => [...currentMessages, assistantMessage]);
+    } finally {
+      window.clearTimeout(timeout);
       setIsSending(false);
-    }, 500);
+    }
   }
 
   function handleClear() {
@@ -81,7 +128,7 @@ export default function ChatPage() {
               情绪陪伴对话
             </h1>
             <p className="mt-2 text-sm leading-6 text-stone-700">
-              聊天记录当前只保存在页面状态中，刷新后会清空；本阶段不接入真实模型 API。
+              聊天记录当前只保存在页面状态中，刷新后会清空；不会写入数据库。
             </p>
           </div>
           <button
