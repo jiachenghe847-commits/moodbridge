@@ -2,11 +2,13 @@
   "name": "moodbridge",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "test:risk": "tsc -p tsconfig.test.json && node .test-build/tests/risk.test.js"
   },
   "dependencies": {
