@@ -6,6 +6,10 @@ node_modules
 .test-build
 out
 
+# local sqlite
+prisma/*.db
+prisma/*.db-journal
+
 # production
 build
 
