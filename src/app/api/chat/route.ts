@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     return errorResponse("请输入想发送的内容。", 400);
   }
 
-  const apiKey = process.env.MODEL_API_KEY;
+  const apiKey = process.env.MODEL_API_KEY ?? process.env.AI_API_KEY;
   const apiBaseUrl =
     process.env.MODEL_API_BASE_URL ??
     "https://api.openai.com/v1/chat/completions";

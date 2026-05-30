@@ -1,0 +1,3 @@
+moodbridge.h-j-c.online {
+	reverse_proxy app:3000
+}
