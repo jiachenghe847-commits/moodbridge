@@ -13,6 +13,20 @@ services:
       - ./data:/app/data
     restart: unless-stopped
 
+  db-init:
+    build:
+      context: .
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: file:/app/data/prod.db
+    command: ["npm", "run", "db:push"]
+    volumes:
+      - ./data:/app/data
+    profiles:
+      - tools
+
   caddy:
     image: caddy:2.8-alpine
     depends_on:
