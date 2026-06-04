@@ -11,7 +11,7 @@ export default function Home() {
             中文 AI 情绪陪伴与心理风险提示助手
           </h1>
           <p className="max-w-2xl text-base leading-7 text-stone-700">
-            心桥面向中文用户，帮助整理情绪，并在有限对话中识别潜在风险线索，给出非诊断性的风险提示与自评问卷引导。
+            心桥面向中文用户，帮助整理情绪，并在有限对话中识别潜在风险线索，给出非诊断性的风险提示与自评、筛查引导。
             它不是医疗诊断工具，不能替代医生、心理咨询师或紧急救援服务。
           </p>
         </div>
@@ -20,7 +20,7 @@ export default function Home() {
           <ul className="mt-4 space-y-3 text-sm leading-6 text-stone-700">
             <li>聊天页通过服务端 API 调用模型。</li>
             <li>风险提示与聊天回复分离，结果只表示潜在风险可能。</li>
-            <li>低落、兴趣下降、无意义感可引导 PHQ-9；焦虑、紧张、过度担心可引导 GAD-7。</li>
+            <li>PHQ-9/GAD-7 可站内填写，其他授权不清量表只提供外链或准备清单。</li>
             <li>自伤、自杀或他伤线索优先触发危机提示。</li>
             <li>暂不实现登录。</li>
           </ul>
@@ -32,10 +32,10 @@ export default function Home() {
           className="rounded-lg border border-teal-200 bg-teal-50 p-5 text-teal-950 shadow-sm transition hover:border-teal-500 hover:bg-teal-100"
           href="/screeners"
         >
-          <p className="text-sm font-medium">自评问卷</p>
-          <h2 className="mt-2 text-xl font-semibold">PHQ-9 / GAD-7</h2>
+          <p className="text-sm font-medium">自评与筛查</p>
+          <h2 className="mt-2 text-xl font-semibold">筛查中心</h2>
           <p className="mt-2 text-sm leading-6">
-            回顾过去两周的状态，获得非诊断性的分数解释与 AI 报告。
+            查看 PHQ-9、GAD-7、ADHD、ASD、OCD、学习与发育相关入口，获得非诊断性报告。
           </p>
         </Link>
         <Link
