@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   classifyRiskText,
+  getRuleBasedRiskAssessment,
   parseRiskAssessmentJson,
 } from "../src/lib/risk";
 
@@ -53,18 +54,57 @@ test("严格解析非法 JSON 时返回低风险兜底", () => {
   const assessment = parseRiskAssessmentJson("{not json");
 
   assert.equal(assessment.riskLevel, "low");
-  assert.equal(assessment.showSupportCard, false);
+  assert.equal(assessment.confidence, "low");
 });
 
-test("严格解析 high 或 emergency 时强制显示求助卡片", () => {
+test("严格解析 high 或 emergency 时补充危机资源", () => {
   const assessment = parseRiskAssessmentJson(
     JSON.stringify({
       riskLevel: "high",
-      reason: "风险表达。",
-      showSupportCard: false,
+      confidence: "medium",
+      signals: ["风险表达"],
+      missingInfo: [],
+      shouldAskFollowUp: false,
+      followUpQuestion: null,
+      suggestedScreeners: [],
+      recommendedAction: "请尽快联系支持。",
+      crisisResources: [],
     }),
   );
 
   assert.equal(assessment.riskLevel, "high");
-  assert.equal(assessment.showSupportCard, true);
+  assert.ok(assessment.crisisResources.some((item) => item.includes("12356")));
+});
+
+test("明确计划和具体工具触发本地紧急规则", () => {
+  const assessment = getRuleBasedRiskAssessment("我打算今晚吞药自杀。");
+
+  assert.equal(assessment?.riskLevel, "emergency");
+  assert.equal(assessment?.confidence, "high");
+  assert.deepEqual(assessment?.suggestedScreeners, []);
+});
+
+test("普通时间词不单独触发本地高风险规则", () => {
+  const assessment = getRuleBasedRiskAssessment("今晚我很焦虑，也睡不着。");
+
+  assert.equal(assessment, null);
+});
+
+test("解析模型结果时过滤药物和治疗方案建议", () => {
+  const assessment = parseRiskAssessmentJson(
+    JSON.stringify({
+      riskLevel: "medium",
+      confidence: "medium",
+      signals: ["焦虑紧张"],
+      missingInfo: ["是否需要用药"],
+      shouldAskFollowUp: true,
+      followUpQuestion: "持续多久了？",
+      suggestedScreeners: ["GAD-7"],
+      recommendedAction: "建议制定治疗方案并服药。",
+      crisisResources: [],
+    }),
+  );
+
+  assert.deepEqual(assessment.missingInfo, []);
+  assert.notEqual(assessment.recommendedAction, "建议制定治疗方案并服药。");
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { RiskSupportCard } from "./RiskSupportCard";
+import { GuidedRiskPanel } from "./GuidedRiskPanel";
 
 type Message = {
   id: string;
@@ -9,11 +9,7 @@ type Message = {
   content: string;
 };
 
-type RiskAssessment = {
-  riskLevel: "low" | "medium" | "high" | "emergency";
-  reason: string;
-  showSupportCard: boolean;
-};
+type ChatMode = "chat" | "guidedRisk";
 
 type ChatPanelProps = {
   compact?: boolean;
@@ -34,10 +30,10 @@ const fallbackErrorMessage =
 const requestTimeoutMs = 25_000;
 
 export function ChatPanel({ compact = false }: ChatPanelProps) {
+  const [mode, setMode] = useState<ChatMode>("chat");
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [showRiskSupportCard, setShowRiskSupportCard] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const trimmedInput = input.trim();
@@ -70,22 +66,14 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
     }, requestTimeoutMs);
 
     try {
-      const riskPromise = fetch("/api/risk", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: userMessage.content }),
-        signal: controller.signal,
-      });
-
-      const chatPromise = fetch("/api/chat", {
+      const nextMessages = [...messages, userMessage];
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          messages: [...messages, userMessage].map((message) => ({
+          messages: nextMessages.map((message) => ({
             role: message.role,
             content: message.content,
           })),
@@ -93,31 +81,6 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
         signal: controller.signal,
       });
 
-      const [riskResult, chatResult] = await Promise.allSettled([
-        riskPromise,
-        chatPromise,
-      ]);
-
-      const riskData =
-        riskResult.status === "fulfilled"
-          ? ((await riskResult.value.json().catch(() => null)) as
-              | RiskAssessment
-              | null)
-          : null;
-
-      if (
-        riskData?.riskLevel === "high" ||
-        riskData?.riskLevel === "emergency" ||
-        riskData?.showSupportCard === true
-      ) {
-        setShowRiskSupportCard(true);
-      }
-
-      if (chatResult.status === "rejected") {
-        throw chatResult.reason;
-      }
-
-      const response = chatResult.value;
       const data = (await response.json().catch(() => null)) as {
         reply?: unknown;
         error?: unknown;
@@ -162,13 +125,14 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
 
     setMessages(initialMessages);
     setInput("");
-    setShowRiskSupportCard(false);
   }
 
   return (
     <div
-      className={`flex flex-col gap-4 ${
-        compact ? "min-h-[720px]" : "mx-auto min-h-[calc(100vh-153px)] max-w-2xl"
+      className={`flex min-h-0 flex-col gap-4 ${
+        compact
+          ? "min-h-[72vh] lg:min-h-[760px]"
+          : "mx-auto min-h-[calc(100svh-153px)] max-w-2xl"
       }`}
     >
       <section className="space-y-3">
@@ -193,14 +157,44 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
         </div>
       </section>
 
+      <div className="grid grid-cols-2 rounded-lg border border-stone-200 bg-white p-1 text-sm shadow-sm">
+        <button
+          className={`rounded-md px-3 py-2 font-medium transition ${
+            mode === "chat"
+              ? "bg-stone-950 text-white"
+              : "text-stone-700 hover:bg-stone-50"
+          }`}
+          onClick={() => setMode("chat")}
+          type="button"
+        >
+          自由聊天
+        </button>
+        <button
+          className={`rounded-md px-3 py-2 font-medium transition ${
+            mode === "guidedRisk"
+              ? "bg-stone-950 text-white"
+              : "text-stone-700 hover:bg-stone-50"
+          }`}
+          onClick={() => setMode("guidedRisk")}
+          type="button"
+        >
+          风险引导
+        </button>
+      </div>
+
       <p className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-        本助手仅提供一般性情绪支持，不替代专业医疗或心理咨询服务。
+        当前结果只是风险提示，不是诊断；问卷结果也不是诊断。本项目不替代医生、心理咨询师或紧急救援。
+        如有紧急危险，请联系 110 / 120 或身边可信任的人。
       </p>
 
-      {showRiskSupportCard ? <RiskSupportCard /> : null}
+      {mode === "guidedRisk" ? <GuidedRiskPanel /> : null}
 
-      <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
-        <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5">
+      <section
+        className={`min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm ${
+          mode === "chat" ? "flex" : "hidden"
+        }`}
+      >
+        <div className="flex-1 space-y-4 overflow-y-auto px-3 py-4 sm:px-4 sm:py-5">
           {messages.map((message) => (
             <div
               className={`flex ${
@@ -209,10 +203,10 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
               key={message.id}
             >
               <div
-                className={`max-w-[82%] rounded-lg px-4 py-3 text-sm leading-6 ${
+                className={`max-w-[88%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-sm leading-6 sm:max-w-[82%] ${
                   message.role === "user"
-                    ? "bg-teal-700 text-white"
-                    : "bg-stone-100 text-stone-800"
+                    ? "rounded-br-md bg-teal-700 text-white"
+                    : "rounded-bl-md bg-stone-100 text-stone-800"
                 }`}
               >
                 {message.content}
@@ -222,7 +216,7 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
 
           {isSending ? (
             <div className="flex justify-start">
-              <div className="rounded-lg bg-stone-100 px-4 py-3 text-sm text-stone-600">
+              <div className="rounded-2xl rounded-bl-md bg-stone-100 px-4 py-3 text-sm text-stone-600">
                 心桥正在回应...
               </div>
             </div>
@@ -232,13 +226,13 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
         </div>
 
         <form
-          className="border-t border-stone-200 bg-stone-50 p-3"
+          className="sticky bottom-0 border-t border-stone-200 bg-stone-50 p-3"
           onSubmit={handleSubmit}
         >
           <label className="block">
             <span className="sr-only">输入消息</span>
             <textarea
-              className="max-h-32 min-h-20 w-full resize-none rounded-md border border-stone-300 bg-white p-3 text-base leading-6 outline-none transition placeholder:text-stone-400 focus:border-teal-600"
+              className="max-h-32 min-h-20 w-full resize-none rounded-md border border-stone-300 bg-white p-3 text-base leading-6 outline-none transition placeholder:text-stone-400 focus:border-teal-600 disabled:bg-stone-100"
               disabled={isSending}
               onChange={(event) => setInput(event.target.value)}
               onKeyDown={(event) => {
@@ -252,12 +246,12 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
             />
           </label>
 
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <p className="text-xs text-stone-500">
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs leading-5 text-stone-500">
               空输入不会发送，发送时会暂时锁定按钮。
             </p>
             <button
-              className="rounded-md bg-stone-950 px-5 py-3 text-sm font-medium text-white transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-stone-600"
+              className="h-11 rounded-md bg-stone-950 px-5 text-sm font-medium text-white transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-stone-600 sm:min-w-24"
               disabled={!canSend}
               type="submit"
             >
