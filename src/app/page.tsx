@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ChatPanel } from "../components/ChatPanel";
 
 export default function Home() {
@@ -24,6 +25,31 @@ export default function Home() {
             <li>暂不实现登录。</li>
           </ul>
         </div>
+      </section>
+
+      <section className="grid gap-4 sm:grid-cols-2">
+        <Link
+          className="rounded-lg border border-teal-200 bg-teal-50 p-5 text-teal-950 shadow-sm transition hover:border-teal-500 hover:bg-teal-100"
+          href="/screeners"
+        >
+          <p className="text-sm font-medium">自评问卷</p>
+          <h2 className="mt-2 text-xl font-semibold">PHQ-9 / GAD-7</h2>
+          <p className="mt-2 text-sm leading-6">
+            回顾过去两周的状态，获得非诊断性的分数解释与 AI 报告。
+          </p>
+        </Link>
+        <Link
+          className="rounded-lg border border-stone-200 bg-white p-5 text-stone-800 shadow-sm transition hover:border-teal-300 hover:bg-stone-50"
+          href="/mood"
+        >
+          <p className="text-sm font-medium text-teal-700">心情记录</p>
+          <h2 className="mt-2 text-xl font-semibold text-stone-950">
+            记录每日状态
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-stone-700">
+            保存你主动提交的心情记录，用于自我观察，不构成心理诊断。
+          </p>
+        </Link>
       </section>
 
       <section>

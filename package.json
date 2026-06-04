@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate deploy",
-    "test:risk": "tsc -p tsconfig.test.json && node .test-build/tests/risk.test.js"
+    "test:risk": "tsc -p tsconfig.test.json && node --test .test-build/tests/*.test.js"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",

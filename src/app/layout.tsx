@@ -6,6 +6,7 @@ const navItems = [
   { href: "/", label: "首页" },
   { href: "/chat", label: "聊天" },
   { href: "/mood", label: "心情记录" },
+  { href: "/screeners", label: "自评问卷" },
   { href: "/privacy", label: "隐私与免责声明" },
 ];
 
