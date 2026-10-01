@@ -20,3 +20,22 @@ Moodbridge 心桥是中文 AI 情绪陪伴与心理风险提示助手，不是�
 - 前端代码不得包含或暴露真实 API Key。
 - 暂不创建数据库。
 - 暂不实现登录。
+- 注：仓库已包含 Prisma + SQLite 的 `MoodEntry` 心情记录表（无用户字段）。当前没有登录与用户隔离，文档不得声称数据“私密”或“受保护”；未经明确要求不要修改认证、数据模式或安全边界。
+
+## 目录
+
+- `src/app/` – 页面（首页、`chat`、`mood`、`screeners`、`privacy`）与 `api/` 路由（chat、risk、risk-assess、screener-report、mood）
+- `src/lib/` – 风险分类、筛查、心情记录工具与 Prisma 客户端
+- `src/components/` – UI 组件
+- `prisma/` – schema 与迁移
+- `tests/` – `risk`、`screeners` 单元测试
+- `Dockerfile`、`docker-compose.yml`、`Caddyfile` – 容器部署配置
+
+## 运行与检查
+
+见 `README.md`。常用：`npm run dev`、`npm run lint`、`npm run typecheck`、`npm run build`、`npm run test:risk`。
+
+## 完成标准
+
+- 相关检查通过（或如实说明未运行及原因）。
+- 文档与实际代码、路径一致；不夸大隐私或安全能力。
