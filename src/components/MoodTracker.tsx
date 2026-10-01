@@ -139,7 +139,7 @@ export function MoodTracker() {
         <div>
           <h1 className="text-2xl font-semibold text-stone-950">自我观察</h1>
           <p className="mt-2 text-sm leading-6 text-stone-700">
-            心情记录仅用于用户自我观察，不构成心理诊断；这里只保存你主动提交的记录。
+            心情记录仅用于用户自我观察，不构成心理诊断；这里只保存你主动提交的记录。本站没有登录和用户隔离，记录对能访问本站的所有人可见、可删除，请勿填写敏感信息。
           </p>
         </div>
       </section>
